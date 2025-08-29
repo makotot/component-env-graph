@@ -1,0 +1,57 @@
+{
+  "name": "@makotot/component-env-graph",
+  "version": "0.1.0",
+  "description": "A library to statically analyze component dependencies in a React Server Components (RSC) project and determine their execution environment.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "tsc": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "react",
+    "rsc",
+    "react-server-components",
+    "server-components",
+    "client-components",
+    "dependency-graph",
+    "static-analysis",
+    "ts-morph"
+  ],
+  "author": "makotot",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/makotot/component-env-graph.git"
+  },
+  "homepage": "https://github.com/makotot/component-env-graph#readme",
+  "bugs": {
+    "url": "https://github.com/makotot/component-env-graph/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0 <6.0.0"
+  },
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  },
+  "dependencies": {
+    "ts-morph": "26.0.0"
+  }
+}
