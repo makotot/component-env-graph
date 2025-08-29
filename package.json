@@ -2,14 +2,14 @@
   "name": "@makotot/component-env-graph",
   "version": "0.1.1",
   "description": "A library to statically analyze component dependencies in a React Server Components (RSC) project and determine their execution environment.",
-  "main": "dist/cjs/index.js",
+  "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
+      "require": "./dist/cjs/index.cjs",
       "types": "./dist/esm/index.d.ts"
     }
   },
@@ -19,7 +19,7 @@
   "scripts": {
     "build": "rm -rf dist && npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.esm.json",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && mv dist/cjs/index.js dist/cjs/index.cjs",
     "tsc": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
