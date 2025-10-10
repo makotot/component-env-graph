@@ -39,12 +39,6 @@ describe("ComponentEnvGraph", () => {
   type TypeCase = {
     name: string;
     files: Record<string, string>;
-    actions?: Array<{
-      operation: "write" | "remove";
-      filePath: string;
-      content?: string;
-      changedFiles?: string[];
-    }>;
     expect: Record<string, string | undefined>;
   };
 
@@ -87,37 +81,7 @@ describe("ComponentEnvGraph", () => {
         "__mocks__/bar.ts": undefined,
       },
     },
-    {
-      name: "updates type when use client is added/removed",
-      files: { "server.tsx": "export const S = () => null;" },
-      actions: [
-        {
-          operation: "write",
-          filePath: "server.tsx",
-          content: '"use client"; export const S = () => null;',
-          changedFiles: ["server.tsx"],
-        },
-        {
-          operation: "write",
-          filePath: "server.tsx",
-          content: "export const S = () => null;",
-          changedFiles: ["server.tsx"],
-        },
-      ],
-      expect: { "server.tsx": "server" },
-    },
-    {
-      name: "removes node when file is deleted",
-      files: { "shared.tsx": "export const Sh = () => null;" },
-      actions: [
-        {
-          operation: "remove",
-          filePath: "shared.tsx",
-          changedFiles: ["shared.tsx"],
-        },
-      ],
-      expect: { "shared.tsx": undefined },
-    },
+
     {
       name: "handles circular dependencies",
       files: {
@@ -147,7 +111,7 @@ describe("ComponentEnvGraph", () => {
     },
   ];
 
-  for (const { name, files, actions, expect: expected } of typeCases) {
+  for (const { name, files, expect: expected } of typeCases) {
     it(name, () => {
       for (const [filePath, content] of Object.entries(files)) {
         const fullPath = path.join(tempDir, filePath);
@@ -158,39 +122,87 @@ describe("ComponentEnvGraph", () => {
         fs.writeFileSync(fullPath, content);
       }
       graph.build();
-      if (actions) {
-        for (const action of actions) {
-          if (action.operation === "write") {
-            const fullPath = path.join(tempDir, action.filePath);
-            const dir = path.dirname(fullPath);
-            if (!fs.existsSync(dir)) {
-              fs.mkdirSync(dir, { recursive: true });
-            }
-            if (typeof action.content !== "undefined") {
-              fs.writeFileSync(fullPath, action.content);
-            }
-          } else if (action.operation === "remove") {
-            remove(action.filePath);
-          }
-          graph.build(
-            (action.changedFiles || [action.filePath]).map((f) =>
-              path.join(tempDir, f)
-            )
-          );
-        }
-      }
-      for (const [filePath, expectedType] of Object.entries(expected)) {
+      const expectTypesEntries = Object.entries(expected).filter(
+        ([, v]) => v !== undefined
+      );
+      const expectAbsent = Object.entries(expected)
+        .filter(([, v]) => v === undefined)
+        .map(([k]) => k);
+      for (const [filePath, expectedType] of expectTypesEntries) {
         const node = graph.nodes.get(path.join(tempDir, filePath));
-        if (expectedType === undefined) {
-          expect(node, `${filePath} should be removed from nodes`).toBeFalsy();
-        } else {
-          expect(node?.type, `${filePath} should be ${expectedType}`).toBe(
-            expectedType
-          );
-        }
+        expect(node?.type, `${filePath} should be ${expectedType}`).toBe(
+          expectedType
+        );
+      }
+      for (const filePath of expectAbsent) {
+        const node = graph.nodes.get(path.join(tempDir, filePath));
+        expect(node, `${filePath} should be removed from nodes`).toBeFalsy();
       }
     });
   }
+
+  // write operation scenarios
+  it.each([
+    {
+      name: "updates type when use client is added/removed",
+      initial: { "server.tsx": "export const S = () => null;" },
+      writes: [
+        {
+          filePath: "server.tsx",
+          content: '"use client"; export const S = () => null;',
+          changedFiles: ["server.tsx"],
+        },
+        {
+          filePath: "server.tsx",
+          content: "export const S = () => null;",
+          changedFiles: ["server.tsx"],
+        },
+      ],
+      expectTypes: { "server.tsx": "server" },
+    },
+  ])("$name", ({ initial, writes, expectTypes }) => {
+    for (const [file, content] of Object.entries(initial)) {
+      write(file, content);
+    }
+    graph.build();
+    for (const w of writes) {
+      write(w.filePath, w.content);
+      const changed = (w.changedFiles || [w.filePath]).map((f) =>
+        path.join(tempDir, f)
+      );
+      graph.build(changed);
+    }
+    for (const [file, t] of Object.entries(expectTypes)) {
+      const node = graph.nodes.get(path.join(tempDir, file));
+      expect(node?.type, `${file} should be ${t}`).toBe(t);
+    }
+  });
+
+  // remove operation scenarios
+  it.each([
+    {
+      name: "removes node when file is deleted",
+      initial: { "shared.tsx": "export const Sh = () => null;" },
+      removes: [{ filePath: "shared.tsx", changedFiles: ["shared.tsx"] }],
+      expectAbsent: ["shared.tsx"],
+    },
+  ])("$name", ({ initial, removes, expectAbsent }) => {
+    for (const [file, content] of Object.entries(initial)) {
+      write(file, content);
+    }
+    graph.build();
+    for (const r of removes) {
+      remove(r.filePath);
+      const changed = (r.changedFiles || [r.filePath]).map((f) =>
+        path.join(tempDir, f)
+      );
+      graph.build(changed);
+    }
+    for (const file of expectAbsent as string[]) {
+      const node = graph.nodes.get(path.join(tempDir, file));
+      expect(node, `${file} should be removed from nodes`).toBeFalsy();
+    }
+  });
 });
 
 describe("ComponentEnvGraph tsConfigFilePath option", () => {
@@ -214,6 +226,7 @@ describe("ComponentEnvGraph tsConfigFilePath option", () => {
     expect(node?.type).toBe("client");
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
+
   it("defaults to <rootDir>/tsconfig.json if no path is provided", () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dep-graph-test-"));
     fs.writeFileSync(
