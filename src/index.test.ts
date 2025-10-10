@@ -1,6 +1,9 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+// biome-ignore lint/performance/noNamespaceImport: node:fs cannot import with default import
+import * as fs from "node:fs";
+// biome-ignore lint/performance/noNamespaceImport: node:os cannot import with default import
+import * as os from "node:os";
+// biome-ignore lint/performance/noNamespaceImport: node:path cannot import with default import
+import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ComponentEnvGraph } from "./index.js";
 
