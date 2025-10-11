@@ -49,6 +49,15 @@ describe("ComponentEnvGraph", () => {
       expect: { "client.tsx": "client" },
     },
     {
+      name: "shared dep with mixed clients (a->b, c->b; only a is client)",
+      files: {
+        "a.tsx": '"use client"; import { B } from "./b"; export const A = () => null;',
+        "c.tsx": 'import { B } from "./b"; export const C = () => null;',
+        "b.tsx": 'export const B = () => null;',
+      },
+      expect: { "a.tsx": "client", "b.tsx": "universal", "c.tsx": "server" },
+    },
+    {
       name: "server component (no use client)",
       files: { "server.tsx": "export const S = () => null;" },
       expect: { "server.tsx": "server" },
@@ -63,6 +72,16 @@ describe("ComponentEnvGraph", () => {
         "universal.tsx": "export const Sh = () => null;",
       },
       expect: { "universal.tsx": "universal" },
+    },
+    {
+      name: "client propagation across chain (a -> b -> c)",
+      files: {
+        "a.tsx":
+          '"use client"; import { B } from "./b"; export const A = () => null;',
+        "b.tsx": 'import { C } from "./c"; export const B = () => null;',
+        "c.tsx": "export const C = () => null;",
+      },
+      expect: { "a.tsx": "client", "b.tsx": "client", "c.tsx": "client" },
     },
     {
       name: "other: config, d.ts, test, spec, __mocks__",
