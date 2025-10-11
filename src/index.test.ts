@@ -51,9 +51,10 @@ describe("ComponentEnvGraph", () => {
     {
       name: "shared dep with mixed clients (a->b, c->b; only a is client)",
       files: {
-        "a.tsx": '"use client"; import { B } from "./b"; export const A = () => null;',
+        "a.tsx":
+          '"use client"; import { B } from "./b"; export const A = () => null;',
         "c.tsx": 'import { B } from "./b"; export const C = () => null;',
-        "b.tsx": 'export const B = () => null;',
+        "b.tsx": "export const B = () => null;",
       },
       expect: { "a.tsx": "client", "b.tsx": "universal", "c.tsx": "server" },
     },
