@@ -8,9 +8,9 @@
   "type": "module",
   "exports": {
     ".": {
+      "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.cjs",
-      "types": "./dist/esm/index.d.ts"
+      "require": "./dist/cjs/index.cjs"
     }
   },
   "files": [
@@ -21,7 +21,9 @@
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json && mv dist/cjs/index.js dist/cjs/index.cjs",
     "tsc": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check": "ultracite check",
+    "format": "ultracite fix"
   },
   "keywords": [
     "react",
@@ -51,8 +53,10 @@
   },
   "packageManager": "pnpm@10.15.1",
   "devDependencies": {
+    "@biomejs/biome": "2.2.5",
     "@types/node": "^24.3.0",
     "typescript": "5.9.3",
+    "ultracite": "5.6.1",
     "vitest": "3.2.4"
   },
   "dependencies": {
