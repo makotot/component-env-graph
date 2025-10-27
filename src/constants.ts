@@ -19,4 +19,3 @@ export const DEFAULT_EXCLUDE = [
   "build/**",
   "coverage/**",
 ];
-

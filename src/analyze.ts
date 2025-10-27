@@ -38,4 +38,3 @@ export function getStaticImports(sf: SourceFile): string[] {
 
   return [...importFiles, ...exportFiles];
 }
-
