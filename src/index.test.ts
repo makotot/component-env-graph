@@ -212,26 +212,32 @@ describe("ComponentEnvGraph", () => {
       file: "scripts/setup/a.ts",
       extraExclude: ["scripts/**/*.ts"],
     },
-  ])("ignores incremental updates by pattern - %s", ({ file, extraExclude }) => {
-    const g = extraExclude
-      ? new ComponentEnvGraph(tempDir, { exclude: extraExclude })
-      : graph;
-    // initial build (empty project besides tsconfig)
-    g.build();
+  ])(
+    "ignores incremental updates by pattern - %s",
+    ({ file, extraExclude }) => {
+      const g = extraExclude
+        ? new ComponentEnvGraph(tempDir, { exclude: extraExclude })
+        : graph;
+      // initial build (empty project besides tsconfig)
+      g.build();
 
-    // write target file and try to add via incremental build
-    const target = path.join(tempDir, file);
-    const dir = path.dirname(target);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+      // write target file and try to add via incremental build
+      const target = path.join(tempDir, file);
+      const dir = path.dirname(target);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(target, "export const X = 1;\n");
+
+      g.build([target]);
+
+      const node = g.nodes.get(target);
+      expect(
+        node,
+        `${file} should be excluded in incremental build`
+      ).toBeFalsy();
     }
-    fs.writeFileSync(target, "export const X = 1;\n");
-
-    g.build([target]);
-
-    const node = g.nodes.get(target);
-    expect(node, `${file} should be excluded in incremental build`).toBeFalsy();
-  });
+  );
 
   // remove operation scenarios
   it.each([
