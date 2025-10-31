@@ -24,10 +24,10 @@ export function refreshChangedFiles(
   nodes: Map<string, FileNode>,
   changedFiles: string[],
   affectedFiles: Set<string>,
-  excludes: RegExp
+  isGlobExcluded: (absPath: string) => boolean
 ) {
   for (const changed of changedFiles) {
-    if (excludes.test(changed)) {
+    if (isGlobExcluded(changed)) {
       nodes.delete(changed);
       const existed = project.getSourceFile(changed);
       if (existed) {

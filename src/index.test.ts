@@ -198,6 +198,47 @@ describe("ComponentEnvGraph", () => {
     }
   });
 
+  it.each([
+    { name: "default: node_modules/**", file: "node_modules/pkg/index.ts" },
+    { name: "default: .git/**", file: ".git/hooks/a.ts" },
+    { name: "default: dist/**", file: "dist/a.ts" },
+    {
+      name: "custom exclude: vendor/**",
+      file: "vendor/lib/a.ts",
+      extraExclude: ["vendor/**"],
+    },
+    {
+      name: "custom exclude: scripts/**/*.ts",
+      file: "scripts/setup/a.ts",
+      extraExclude: ["scripts/**/*.ts"],
+    },
+  ])(
+    "ignores incremental updates by pattern - %s",
+    ({ file, extraExclude }) => {
+      const g = extraExclude
+        ? new ComponentEnvGraph(tempDir, { exclude: extraExclude })
+        : graph;
+      // initial build (empty project besides tsconfig)
+      g.build();
+
+      // write target file and try to add via incremental build
+      const target = path.join(tempDir, file);
+      const dir = path.dirname(target);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(target, "export const X = 1;\n");
+
+      g.build([target]);
+
+      const node = g.nodes.get(target);
+      expect(
+        node,
+        `${file} should be excluded in incremental build`
+      ).toBeFalsy();
+    }
+  );
+
   // remove operation scenarios
   it.each([
     {

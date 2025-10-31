@@ -3,7 +3,8 @@ import { EventEmitter } from "node:events";
 // biome-ignore lint/performance/noNamespaceImport: node:path cannot import with default import
 import * as path from "node:path";
 import { Project, type SourceFile } from "ts-morph";
-import { DEFAULT_EXCLUDE, EXCLUDES } from "./constants.js";
+import { DEFAULT_EXCLUDE } from "./constants.js";
+import { minimatch } from "minimatch";
 import type { ComponentEnvGraphOptions, FileNode } from "./types.js";
 import {
   hasUseClientDirective as analyzeHasUseClientDirective,
@@ -38,7 +39,7 @@ export class ComponentEnvGraph {
   project: Project;
   rootDir: string;
 
-  private readonly globExclude: string[];
+  private readonly excludePatterns: string[];
   private readonly _onDidUpdate = new EventEmitter();
 
   /**
@@ -54,10 +55,7 @@ export class ComponentEnvGraph {
       skipAddingFilesFromTsConfig: false,
     });
 
-    const excludePatterns = [...DEFAULT_EXCLUDE, ...(options?.exclude || [])];
-    this.globExclude = excludePatterns.map(
-      (p) => `!${path.join(this.rootDir, p)}`
-    );
+    this.excludePatterns = [...DEFAULT_EXCLUDE, ...(options?.exclude || [])];
   }
 
   /**
@@ -120,15 +118,12 @@ export class ComponentEnvGraph {
   private updateProjectSourceFiles(changedFiles?: string[]): Set<string> {
     const affectedFiles = new Set<string>();
 
+    this.removeDeletedFiles();
+
     if (changedFiles && changedFiles.length > 0) {
       this.refreshChangedFiles(changedFiles, affectedFiles);
     } else {
       this.addAllSourceFiles();
-    }
-
-    this.removeDeletedFiles();
-
-    if (!changedFiles || changedFiles.length === 0) {
       this.markAllFilesAsAffected(affectedFiles);
     }
 
@@ -144,12 +139,34 @@ export class ComponentEnvGraph {
       this.nodes,
       changedFiles,
       affectedFiles,
-      EXCLUDES
+      this.isGlobExcluded
     );
   }
 
+  /**
+   * Returns whether the given absolute path matches any exclude glob (incremental updates).
+   * - Source of truth: `excludePatterns` (DEFAULT_EXCLUDE + options.exclude)
+   * - Normalizes both target path and patterns to POSIX form ("/" separators)
+   * - Uses `dot: true` to match dot-prefixed paths like `.git/**`
+   */
+  private readonly isGlobExcluded = (absPath: string): boolean => {
+    // Normalize Windows path to POSIX: C:\proj\node_modules\x\index.ts -> C:/proj/node_modules/x/index.ts
+    const target = absPath.split(path.sep).join("/");
+    for (const p of this.excludePatterns) {
+      // Convert to absolute glob from project root and normalize separators to "/"
+      const pat = path.join(this.rootDir, p).split(path.sep).join("/");
+      if (minimatch(target, pat, { dot: true })) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   private addAllSourceFiles() {
-    addAllSourceFilesFn(this.project, this.rootDir, this.globExclude);
+    const globExclude = this.excludePatterns.map(
+      (p) => `!${path.join(this.rootDir, p)}`
+    );
+    addAllSourceFilesFn(this.project, this.rootDir, globExclude);
   }
 
   private removeDeletedFiles() {
