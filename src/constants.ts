@@ -1,6 +1,5 @@
-export const EXCLUDES = /\.(stories|config|d|test|spec)\.(ts|tsx)$|__mocks__/;
-
 export const DEFAULT_EXCLUDE = [
+  ".storybook/**",
   "**/*.stories.tsx",
   "**/*.stories.ts",
   "**/*.spec.ts",
