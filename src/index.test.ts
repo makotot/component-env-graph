@@ -49,6 +49,22 @@ describe("ComponentEnvGraph", () => {
       expect: { "client.tsx": "client" },
     },
     {
+      name: "excluded stories file should not effect graph",
+      files: {
+        "Parent.tsx":
+          '"use client"; import { A } from "./a"; export const P = () => null;',
+        "a.tsx": "export const A = () => null;",
+        // stories file imports a.tsx but must be excluded from the graph
+        "a.stories.tsx": 'import { A } from "./a"; export default {};',
+      },
+      expect: {
+        "Parent.tsx": "client",
+        "a.tsx": "client",
+        // stories should not appear in nodes
+        "a.stories.tsx": undefined,
+      },
+    },
+    {
       name: "shared dep with mixed clients (a->b, c->b; only a is client)",
       files: {
         "a.tsx":
