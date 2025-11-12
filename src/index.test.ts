@@ -322,3 +322,122 @@ describe("ComponentEnvGraph tsConfigFilePath option", () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 });
+
+describe("ComponentEnvGraph excluded files remain excluded", () => {
+  const excludedImporters = [
+    "a.stories.tsx",
+    "a.stories.ts",
+    "foo.test.tsx",
+    "foo.spec.ts",
+    "__mocks__/mock.ts",
+    "foo.config.ts",
+  ];
+
+  it.each(excludedImporters)(
+    "excluded importer '%s' present before graph creation",
+    (excludedPath) => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dep-graph-test-"));
+      fs.writeFileSync(
+        path.join(tempDir, "tsconfig.json"),
+        '{ "compilerOptions": { "jsx": "react" }, "include": ["**/*"] }'
+      );
+      // files before graph creation
+      fs.writeFileSync(
+        path.join(tempDir, "Parent.tsx"),
+        '"use client"; import { A } from "./a"; export const P = () => null;'
+      );
+      fs.writeFileSync(path.join(tempDir, "a.tsx"), "export const A = () => null;");
+      // compute relative import specifier from excludedPath to a.tsx
+      const relDir = path.posix.dirname(excludedPath);
+      const relToA = path.posix.relative(relDir, "a");
+      const spec = relToA.startsWith(".") ? relToA : `./${relToA}`;
+      const excludedAbsInit = path.join(tempDir, excludedPath);
+      const excludedInitDir = path.dirname(excludedAbsInit);
+      if (!fs.existsSync(excludedInitDir)) {
+        fs.mkdirSync(excludedInitDir, { recursive: true });
+      }
+      fs.writeFileSync(
+        excludedAbsInit,
+        `import { A } from "${spec}"; export default {};\n`
+      );
+
+      const graph = new ComponentEnvGraph(tempDir);
+      graph.build();
+
+      const parentNode = graph.nodes.get(path.join(tempDir, "Parent.tsx"));
+      const aNode = graph.nodes.get(path.join(tempDir, "a.tsx"));
+      const excludedNode = graph.nodes.get(path.join(tempDir, excludedPath));
+      expect(parentNode?.type).toBe("client");
+      expect(excludedNode, "excluded file should be absent").toBeFalsy();
+      expect(aNode?.type).toBe("client");
+
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  );
+
+  it.each(excludedImporters)(
+    "excluded importer '%s' added after init via incremental build",
+    (excludedPath) => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dep-graph-test-"));
+      fs.writeFileSync(
+        path.join(tempDir, "tsconfig.json"),
+        '{ "compilerOptions": { "jsx": "react" }, "include": ["**/*"] }'
+      );
+      fs.writeFileSync(
+        path.join(tempDir, "Parent.tsx"),
+        '"use client"; import { A } from "./a"; export const P = () => null;'
+      );
+      fs.writeFileSync(path.join(tempDir, "a.tsx"), "export const A = () => null;");
+
+      const graph = new ComponentEnvGraph(tempDir);
+      graph.build();
+
+      const relDir = path.posix.dirname(excludedPath);
+      const relToA = path.posix.relative(relDir, "a");
+      const spec = relToA.startsWith(".") ? relToA : `./${relToA}`;
+      const excludedAbs = path.join(tempDir, excludedPath);
+      const excludedDir = path.dirname(excludedAbs);
+      if (!fs.existsSync(excludedDir)) {
+        fs.mkdirSync(excludedDir, { recursive: true });
+      }
+      fs.writeFileSync(
+        excludedAbs,
+        `import { A } from "${spec}"; export default {};\n`
+      );
+      graph.build([excludedAbs]);
+
+      const excludedNode = graph.nodes.get(excludedAbs);
+      const aNode = graph.nodes.get(path.join(tempDir, "a.tsx"));
+      expect(excludedNode, "excluded file should be absent in incremental").toBeFalsy();
+      expect(aNode?.type).toBe("client");
+
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  );
+
+  it("includes .tsx added after init via incremental build", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dep-graph-test-"));
+    fs.writeFileSync(
+      path.join(tempDir, "tsconfig.json"),
+      '{ "compilerOptions": { "jsx": "react" }, "include": ["**/*"] }'
+    );
+    fs.writeFileSync(
+      path.join(tempDir, "Parent.tsx"),
+      '"use client"; import { A } from "./a"; export const P = () => null;'
+    );
+
+    const graph = new ComponentEnvGraph(tempDir);
+    graph.build();
+
+    const a = path.join(tempDir, "a.tsx");
+    fs.writeFileSync(a, "export const A = () => null;\n");
+    graph.build([a]);
+
+    const parentNode = graph.nodes.get(path.join(tempDir, "Parent.tsx"));
+    const aNode = graph.nodes.get(a);
+    expect(parentNode?.type).toBe("client");
+    expect(aNode?.type).toBe("client");
+
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+});
