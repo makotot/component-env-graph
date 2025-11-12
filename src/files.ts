@@ -26,12 +26,14 @@ export function refreshChangedFiles(
   affectedFiles: Set<string>,
   isGlobExcluded: (absPath: string) => boolean
 ) {
+  let structureChanged = false;
   for (const changed of changedFiles) {
     if (isGlobExcluded(changed)) {
       nodes.delete(changed);
       const existed = project.getSourceFile(changed);
       if (existed) {
         project.removeSourceFile(existed);
+        structureChanged = true;
       }
       continue;
     }
@@ -41,12 +43,14 @@ export function refreshChangedFiles(
     } else {
       try {
         project.addSourceFileAtPath(changed);
+        structureChanged = true;
       } catch (_) {
         // ignore
       }
     }
     affectedFiles.add(changed);
   }
+  return structureChanged;
 }
 
 export function removeDeletedFiles(

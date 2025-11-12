@@ -52,7 +52,9 @@ export class ComponentEnvGraph {
     this.project = new Project({
       tsConfigFilePath:
         options?.tsConfigFilePath || path.join(rootDir, "tsconfig.json"),
-      skipAddingFilesFromTsConfig: false,
+      // Ensure excluded files (e.g. *.stories.tsx) never enter via tsconfig's auto-add
+      // We control inclusion explicitly with addAllSourceFiles + excludes
+      skipAddingFilesFromTsConfig: true,
     });
 
     this.excludePatterns = [...DEFAULT_EXCLUDE, ...(options?.exclude || [])];
@@ -134,13 +136,19 @@ export class ComponentEnvGraph {
     changedFiles: string[],
     affectedFiles: Set<string>
   ) {
-    refreshChangedFilesFn(
+    const structureChanged = refreshChangedFilesFn(
       this.project,
       this.nodes,
       changedFiles,
       affectedFiles,
       this.isGlobExcluded
     );
+    // If the project structure changed (file added or removed),
+    // re-mark all files as affected so that module resolutions and
+    // import graphs are up-to-date (e.g., a parent now resolves to a new file)
+    if (structureChanged) {
+      this.markAllFilesAsAffected(affectedFiles);
+    }
   }
 
   /**
