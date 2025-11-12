@@ -346,7 +346,10 @@ describe("ComponentEnvGraph excluded files remain excluded", () => {
         path.join(tempDir, "Parent.tsx"),
         '"use client"; import { A } from "./a"; export const P = () => null;'
       );
-      fs.writeFileSync(path.join(tempDir, "a.tsx"), "export const A = () => null;");
+      fs.writeFileSync(
+        path.join(tempDir, "a.tsx"),
+        "export const A = () => null;"
+      );
       // compute relative import specifier from excludedPath to a.tsx
       const relDir = path.posix.dirname(excludedPath);
       const relToA = path.posix.relative(relDir, "a");
@@ -387,7 +390,10 @@ describe("ComponentEnvGraph excluded files remain excluded", () => {
         path.join(tempDir, "Parent.tsx"),
         '"use client"; import { A } from "./a"; export const P = () => null;'
       );
-      fs.writeFileSync(path.join(tempDir, "a.tsx"), "export const A = () => null;");
+      fs.writeFileSync(
+        path.join(tempDir, "a.tsx"),
+        "export const A = () => null;"
+      );
 
       const graph = new ComponentEnvGraph(tempDir);
       graph.build();
@@ -408,7 +414,10 @@ describe("ComponentEnvGraph excluded files remain excluded", () => {
 
       const excludedNode = graph.nodes.get(excludedAbs);
       const aNode = graph.nodes.get(path.join(tempDir, "a.tsx"));
-      expect(excludedNode, "excluded file should be absent in incremental").toBeFalsy();
+      expect(
+        excludedNode,
+        "excluded file should be absent in incremental"
+      ).toBeFalsy();
       expect(aNode?.type).toBe("client");
 
       fs.rmSync(tempDir, { recursive: true, force: true });
