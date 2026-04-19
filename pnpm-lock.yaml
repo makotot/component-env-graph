@@ -25,8 +25,8 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
       ultracite:
-        specifier: 5.6.1
-        version: 5.6.1(typescript@6.0.3)
+        specifier: 5.6.4
+        version: 5.6.4(typescript@6.0.3)
       vitest:
         specifier: 4.0.18
         version: 4.0.18(@types/node@24.10.0)
@@ -550,9 +550,6 @@ packages:
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
-  tinyexec@1.0.1:
-    resolution: {integrity: sha512-5uC6DDlmeqiOwCPmK9jMSdOuZTh8bU39Ys6yidB+UTt5hfZUPGAypSgFRiEp+jbi9qH40BLDvy85jIU88wKSqw==}
-
   tinyexec@1.0.2:
     resolution: {integrity: sha512-W/KYk+NFhkmsYpuHq5JykngiOCnxeVL8v8dFnqxSD8qEEdRfXk1SDM6JzNqcERbcGYj9tMrDQBYV9cjgnunFIg==}
     engines: {node: '>=18'}
@@ -602,8 +599,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  ultracite@5.6.1:
-    resolution: {integrity: sha512-RzfjJhCgTs3RbmZeAt7hTxvPxMtRFH/i3QeAm3HXX9FvAdoGW0U8dYvyAQALhQp6S5zGyuXEKft8lXz5Pq2u7A==}
+  ultracite@5.6.4:
+    resolution: {integrity: sha512-Ejgh8uYhqgV1QzKAE1vwRHHu24mTCg43DLOJG+gXi7hHSAPAWdDEs9fgBiuYZxH2bsQiWSsEF6hMv5aLJuM6/w==}
     hasBin: true
 
   undici-types@7.16.0:
@@ -1028,7 +1025,7 @@ snapshots:
       consola: 3.4.2
       pathe: 2.0.3
       pkg-types: 2.3.0
-      tinyexec: 1.0.1
+      tinyexec: 1.0.2
 
   obug@2.1.1: {}
 
@@ -1090,8 +1087,6 @@ snapshots:
 
   tinybench@2.9.0: {}
 
-  tinyexec@1.0.1: {}
-
   tinyexec@1.0.2: {}
 
   tinyglobby@0.2.14:
@@ -1120,7 +1115,7 @@ snapshots:
 
   typescript@6.0.3: {}
 
-  ultracite@5.6.1(typescript@6.0.3):
+  ultracite@5.6.4(typescript@6.0.3):
     dependencies:
       '@clack/prompts': 0.11.0
       '@trpc/server': 11.6.0(typescript@6.0.3)
