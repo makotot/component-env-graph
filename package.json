@@ -49,13 +49,13 @@
     "access": "public"
   },
   "peerDependencies": {
-    "typescript": ">=5.0.0 <7.0.0"
+    "typescript": ">=5.0.0 <8.0.0"
   },
   "packageManager": "pnpm@10.29.3",
   "devDependencies": {
     "@biomejs/biome": "2.2.5",
     "@types/node": "^24.3.0",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "ultracite": "5.6.1",
     "vitest": "4.1.10"
   },
